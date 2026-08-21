@@ -557,7 +557,7 @@ function setDevicePassword() {
 // LINEへWebhook通信を行う関数
 function sendNotification(messageText) {
     // 【重要】ご自身で発行したGASのウェブアプリURLに書き換えてください
-    const gasUrl = "O7PPtuBJyq3MMrr2LdMk1sKfiIfNyq/3PyoWSQMIxyAI8ta7Yk3kW7GOr43UBDxwmVqZl1930VEihA7flpAP2MN4FlviSCXx0+WHxhf0joEq+tPDf+NSok3a3yOwWrDo0NmsvSTzM8S01YQpTMwlHgdB04t89/1O/w1cDnyilFU="; 
+    const gasUrl = "https://script.google.com/macros/s/AKfycby4ZWyyHTKxc1wEMu1GRc4Spgw7xcJGRkJNlwrgyrpYDYrnar-lGRf-chPCj5xhYh-MDw/exec"; 
     
     const deviceName = localStorage.getItem("kb_v19_device_name") || "未設定端末";
     const productName = activeMaster ? activeMaster.name : "製品未選択";
