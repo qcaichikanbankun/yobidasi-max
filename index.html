@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>QR SCANNER PRO v38 - FULL OPTION</title>
     
-    <!-- QR解析ライブラリをオンライン(CDN)から読み込むように変更 -->
+    <!-- QR解析ライブラリをオンライン(CDN)から読み込む -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     
     <style>
@@ -24,7 +24,7 @@
         /* カメラプレビュー */
         .video-container { position: relative; width: 85%; max-width: 380px; aspect-ratio: 1 / 1; border: 5px solid #fff; border-radius: 20px; overflow: hidden; margin: 0 auto 5px; background: #222; flex-shrink: 0; }
         #canvas { width: 100%; height: 100%; object-fit: cover; }
-        .mirror { transform: scaleX(-1); } /* 内カメラ用反転スタイル */
+        .mirror { transform: scaleX(-1); }
 
         /* カメラ切り替えボタン */
         #camera-switch { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; border: 2px solid #fff; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; z-index: 10; cursor: pointer; }
@@ -116,15 +116,15 @@
         <div class="modal-content">
             <h2>マスター登録・詳細設定</h2>
 
-            <!-- ▼ 端末名設定ボタン ▼ -->
+            <!-- 端末名設定ボタン -->
             <button class="btn-sub" style="width:100%; margin-bottom:10px; padding:15px; border:2px solid #007bff; background:#fff; color:#007bff; font-weight:bold;" onclick="setDeviceName()">📱 この端末の設置場所を設定する</button>
             
-            <!-- ▼ パスワード変更ボタンを追加 ▼ -->
+            <!-- パスワード変更ボタン -->
             <button class="btn-sub" style="width:100%; margin-bottom:20px; padding:15px; border:2px solid #28a745; background:#fff; color:#28a745; font-weight:bold;" onclick="setDevicePassword()">🔑 解除パスワードを変更する</button>
 
             <div style="padding:15px;background:#eee;border-radius:15px;text-align:center;margin-bottom:20px;">
                 <canvas id="mini-canvas"></canvas>
-                <!-- ▼ 今のQRを登録ボタンを緑色（#28a745）に変更 ▼ -->
+                <!-- 「今のQRを登録」ボタン（緑色） -->
                 <button class="btn-main" style="width:100%; margin-top:15px; padding:20px; background:#28a745; color: #fff; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);" onclick="registerNew()">今のQRを登録</button>
             </div>
             <div id="edit-list"></div>
@@ -158,13 +158,13 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// 動的にパスワードを取得する関数（初期値は 8181）
+// パスワード取得関数（初期値: 8181）
 function getDevicePassword() {
     return localStorage.getItem("kb_v19_password") || "8181";
 }
 
 const SCAN_INTERVAL_MS = 30000;
-const ANALYSIS_INTERVAL = 200; // QR解析を行う間隔（ミリ秒）: 200ms = 秒間5回
+const ANALYSIS_INTERVAL = 200;
 
 const video = document.createElement("video");
 const canvasElement = document.getElementById("canvas");
@@ -174,7 +174,7 @@ const miniCanvas = miniCanvasElement.getContext("2d");
 let audioCtx;
 let isLocked = false;
 let isInterval = false;
-let currentFacingMode = "user"; // "user" または "environment"
+let currentFacingMode = "user";
 let okCount = 0; 
 let lastAnalysisTime = 0;
 
@@ -258,7 +258,6 @@ function tick() {
         if (now - lastAnalysisTime > ANALYSIS_INTERVAL) {
             lastAnalysisTime = now;
             const img = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-            // jsQRを呼び出し
             const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
             
             if (code && code.data.trim() !== "") {
@@ -304,13 +303,10 @@ function updateStatus(ok) {
         document.getElementById("status-display").innerText = "NG";
         isLocked = true;
 
-        // --- 追加：NG発生時にLINEへ通知（Android用） ---
         sendNotification("【NG発生】かんばん照合で不一致が発生しました");
 
-        // --- 既存：NG発生時にショートカット通知を起動（iPhone用） ---
         const shortcutName = encodeURIComponent("QR通知");
         const text = encodeURIComponent("【NG発生】かんばん照合で不一致が発生しました");
-        // iOSショートカット起動（通信を優先させるため少し遅延）
         setTimeout(() => {
             window.location.href = `shortcuts://run-shortcut?name=${shortcutName}&input=text&text=${text}`;
         }, 100);
@@ -333,7 +329,7 @@ function resetCount() {
 
 function unlock() {
     const input = document.getElementById("pw-input").value;
-    const currentPassword = getDevicePassword(); // 各端末で設定されたパスワードを取得
+    const currentPassword = getDevicePassword();
 
     if (input === currentPassword) {
         isLocked = false;
@@ -438,7 +434,7 @@ function clearLogs() {
     const input = prompt("履歴を削除するにはパスワードを入力してください:");
     if (input === null) return;
     
-    const currentPassword = getDevicePassword(); // 各端末の設定パスワードを取得
+    const currentPassword = getDevicePassword();
 
     if (input === currentPassword) {
         if (confirm("本当に全ての履歴を削除しますか？")) {
@@ -491,13 +487,10 @@ function triggerIphoneShortcut(statusMessage) {
         console.error("Log error:", e);
     }
 
-    // --- 追加：LINE通知を起動（Android用） ---
     sendNotification(statusMessage || "【呼び出し】管理者を呼んでいます");
 
-    // --- 既存：iPhoneショートカットを起動 ---
     const shortcutName = encodeURIComponent("QR通知");
     const text = encodeURIComponent(statusMessage || "管理者を呼んでいます");
-    // iOSショートカット起動（通信を優先させるため少し遅延）
     setTimeout(() => {
         window.location.href = `shortcuts://run-shortcut?name=${shortcutName}&input=text&text=${text}`;
     }, 100);
@@ -507,7 +500,7 @@ function triggerIphoneShortcut(statusMessage) {
         if (overlay) { overlay.style.display = "flex"; }
         
         let pass = "";
-        const currentPassword = getDevicePassword(); // 各端末の設定パスワードを取得
+        const currentPassword = getDevicePassword();
 
         while (pass !== currentPassword) {
             pass = prompt("【作業中断中】\n管理者の解除パスワードを入力してください：");
@@ -519,11 +512,7 @@ function triggerIphoneShortcut(statusMessage) {
     }, 1000);
 }
 
-// ==========================================
-// 追加機能：端末設定・パスワード設定・LINE通知
-// ==========================================
-
-// 端末名を設定して記憶する関数
+// 端末名を設定する関数
 function setDeviceName() {
     const currentName = localStorage.getItem("kb_v19_device_name") || "";
     const newName = prompt("この端末の設置場所（例：Aライン、1号機など）を入力してください", currentName);
@@ -534,15 +523,35 @@ function setDeviceName() {
     }
 }
 
-// 解除パスワードを設定して記憶する関数
+// パスワード変更関数（現在入力 ⇒ 新規入力 ⇒ 確認入力の3ステップ）
 function setDevicePassword() {
     const currentPw = getDevicePassword();
-    const newPw = prompt("新しい管理者解除パスワードを入力してください。\n（初期設定: 8181）", currentPw);
     
-    if (newPw !== null && newPw.trim() !== "") {
-        localStorage.setItem("kb_v19_password", newPw.trim());
-        alert(`管理者解除パスワードを「${newPw.trim()}」に変更しました。`);
+    // 1. 現在のパスワードを入力
+    const inputCurrent = prompt("現在の管理者解除パスワードを入力してください：");
+    if (inputCurrent === null) return; // キャンセル
+    
+    if (inputCurrent !== currentPw) {
+        alert("現在のパスワードが間違っています。");
+        return;
     }
+    
+    // 2. 新しいパスワードを入力
+    const newPw1 = prompt("新しい管理者解除パスワードを入力してください：");
+    if (newPw1 === null || newPw1.trim() === "") return;
+    
+    // 3. 確認でもう一度新しいパスワードを入力
+    const newPw2 = prompt("確認のため、もう一度新しいパスワードを入力してください：");
+    if (newPw2 === null) return;
+    
+    if (newPw1 !== newPw2) {
+        alert("新しいパスワードが一致しませんでした。最初からやり直してください。");
+        return;
+    }
+    
+    // 保存
+    localStorage.setItem("kb_v19_password", newPw1.trim());
+    alert("管理者解除パスワードを変更しました。");
 }
 
 // LINEへWebhook通信を行う関数
@@ -550,11 +559,9 @@ function sendNotification(messageText) {
     // 【重要】ご自身で発行したGASのウェブアプリURLに書き換えてください
     const gasUrl = "O7PPtuBJyq3MMrr2LdMk1sKfiIfNyq/3PyoWSQMIxyAI8ta7Yk3kW7GOr43UBDxwmVqZl1930VEihA7flpAP2MN4FlviSCXx0+WHxhf0joEq+tPDf+NSok3a3yOwWrDo0NmsvSTzM8S01YQpTMwlHgdB04t89/1O/w1cDnyilFU="; 
     
-    // iPadに記憶させた端末名を取得（未設定なら「未設定端末」とする）
     const deviceName = localStorage.getItem("kb_v19_device_name") || "未設定端末";
     const productName = activeMaster ? activeMaster.name : "製品未選択";
     
-    // LINEに送る最終的なメッセージを組み立てる
     const finalMessage = `【${deviceName}】\n${messageText}\n(対象: ${productName})`;
 
     fetch(gasUrl, {
@@ -567,9 +574,7 @@ function sendNotification(messageText) {
     }).catch(e => console.error("通知送信エラー:", e));
 }
 
-// ==========================================
-
-// ページ読み込み時の初期化
+// 初期化
 renderMasters(); 
 renderEditList(); 
 renderRecentLogs();
