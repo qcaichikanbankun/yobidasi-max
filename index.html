@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>QR SCANNER PRO v38 - FULL OPTION</title>
     
-    <!-- QR解析ライブラリをオンライン(CDN)から読み込むように変更（コードがスッキリします） -->
+    <!-- QR解析ライブラリをオンライン(CDN)から読み込むように変更 -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     
     <style>
@@ -75,7 +75,7 @@
     <div id="lock-overlay">
         <h1>NG 発生</h1>
         <p>確認が必要です。パスワードを入力してください。</p>
-        <input type="number" id="pw-input" placeholder="****" inputmode="numeric">
+        <input type="password" id="pw-input" placeholder="****">
         <button class="btn-unlock" onclick="unlock()">解除</button>
     </div>
 
@@ -114,14 +114,18 @@
     <!-- マスター管理モーダル -->
     <div id="mgmt-modal" class="modal">
         <div class="modal-content">
-            <h2>マスター登録・削除</h2>
+            <h2>マスター登録・詳細設定</h2>
 
-            <!-- ▼ 端末名設定ボタンを追加 ▼ -->
-            <button class="btn-sub" style="width:100%; margin-bottom:15px; padding:15px; border:2px solid #007bff; background:#fff; color:#007bff; font-weight:bold;" onclick="setDeviceName()">📱 この端末の設置場所を設定する</button>
+            <!-- ▼ 端末名設定ボタン ▼ -->
+            <button class="btn-sub" style="width:100%; margin-bottom:10px; padding:15px; border:2px solid #007bff; background:#fff; color:#007bff; font-weight:bold;" onclick="setDeviceName()">📱 この端末の設置場所を設定する</button>
+            
+            <!-- ▼ パスワード変更ボタンを追加 ▼ -->
+            <button class="btn-sub" style="width:100%; margin-bottom:20px; padding:15px; border:2px solid #28a745; background:#fff; color:#28a745; font-weight:bold;" onclick="setDevicePassword()">🔑 解除パスワードを変更する</button>
 
             <div style="padding:15px;background:#eee;border-radius:15px;text-align:center;margin-bottom:20px;">
                 <canvas id="mini-canvas"></canvas>
-                <button class="btn-main" style="width:100%; margin-top:15px; padding:20px; color: #fff; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);" onclick="registerNew()">今のQRを登録</button>
+                <!-- ▼ 今のQRを登録ボタンを緑色（#28a745）に変更 ▼ -->
+                <button class="btn-main" style="width:100%; margin-top:15px; padding:20px; background:#28a745; color: #fff; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);" onclick="registerNew()">今のQRを登録</button>
             </div>
             <div id="edit-list"></div>
         </div>
@@ -153,7 +157,12 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.log('SW error', err));
     });
 }
-const UNLOCK_PASSWORD = "8181";
+
+// 動的にパスワードを取得する関数（初期値は 8181）
+function getDevicePassword() {
+    return localStorage.getItem("kb_v19_password") || "8181";
+}
+
 const SCAN_INTERVAL_MS = 30000;
 const ANALYSIS_INTERVAL = 200; // QR解析を行う間隔（ミリ秒）: 200ms = 秒間5回
 
@@ -166,7 +175,7 @@ let audioCtx;
 let isLocked = false;
 let isInterval = false;
 let currentFacingMode = "user"; // "user" または "environment"
-let okCount = 0; // 現在のかんばん照合枚数
+let okCount = 0; 
 let lastAnalysisTime = 0;
 
 let masters = JSON.parse(localStorage.getItem("kb_v19_masters")) || [];
@@ -324,7 +333,9 @@ function resetCount() {
 
 function unlock() {
     const input = document.getElementById("pw-input").value;
-    if (input === UNLOCK_PASSWORD) {
+    const currentPassword = getDevicePassword(); // 各端末で設定されたパスワードを取得
+
+    if (input === currentPassword) {
         isLocked = false;
         isProcessing = false;
         document.getElementById("lock-overlay").style.display = "none";
@@ -426,7 +437,10 @@ function renderAnalysis() {
 function clearLogs() {
     const input = prompt("履歴を削除するにはパスワードを入力してください:");
     if (input === null) return;
-    if (input === "8181") {
+    
+    const currentPassword = getDevicePassword(); // 各端末の設定パスワードを取得
+
+    if (input === currentPassword) {
         if (confirm("本当に全ての履歴を削除しますか？")) {
             logs = [];
             localStorage.setItem("kb_v19_logs", "[]");
@@ -491,18 +505,22 @@ function triggerIphoneShortcut(statusMessage) {
     setTimeout(() => {
         const overlay = document.getElementById("admin-lock-overlay");
         if (overlay) { overlay.style.display = "flex"; }
+        
         let pass = "";
-        while (pass !== "8181") {
+        const currentPassword = getDevicePassword(); // 各端末の設定パスワードを取得
+
+        while (pass !== currentPassword) {
             pass = prompt("【作業中断中】\n管理者の解除パスワードを入力してください：");
             if (pass === null) pass = ""; 
         }
+        
         if (overlay) { overlay.style.display = "none"; }
         alert("ロックを解除しました。");
     }, 1000);
 }
 
 // ==========================================
-// 追加機能：端末名の設定とLINE通知処理
+// 追加機能：端末設定・パスワード設定・LINE通知
 // ==========================================
 
 // 端末名を設定して記憶する関数
@@ -516,15 +534,24 @@ function setDeviceName() {
     }
 }
 
+// 解除パスワードを設定して記憶する関数
+function setDevicePassword() {
+    const currentPw = getDevicePassword();
+    const newPw = prompt("新しい管理者解除パスワードを入力してください。\n（初期設定: 8181）", currentPw);
+    
+    if (newPw !== null && newPw.trim() !== "") {
+        localStorage.setItem("kb_v19_password", newPw.trim());
+        alert(`管理者解除パスワードを「${newPw.trim()}」に変更しました。`);
+    }
+}
+
 // LINEへWebhook通信を行う関数
 function sendNotification(messageText) {
     // 【重要】ご自身で発行したGASのウェブアプリURLに書き換えてください
-    const gasUrl = "https://script.google.com/macros/s/AKfycby4ZWyyHTKxc1wEMu1GRc4Spgw7xcJGRkJNlwrgyrpYDYrnar-lGRf-chPCj5xhYh-MDw/exec"; 
+    const gasUrl = "O7PPtuBJyq3MMrr2LdMk1sKfiIfNyq/3PyoWSQMIxyAI8ta7Yk3kW7GOr43UBDxwmVqZl1930VEihA7flpAP2MN4FlviSCXx0+WHxhf0joEq+tPDf+NSok3a3yOwWrDo0NmsvSTzM8S01YQpTMwlHgdB04t89/1O/w1cDnyilFU="; 
     
     // iPadに記憶させた端末名を取得（未設定なら「未設定端末」とする）
     const deviceName = localStorage.getItem("kb_v19_device_name") || "未設定端末";
-    
-    // 現在かんばん照合中の製品名を取得
     const productName = activeMaster ? activeMaster.name : "製品未選択";
     
     // LINEに送る最終的なメッセージを組み立てる
